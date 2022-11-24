@@ -22,47 +22,61 @@ app.get('/', (req, res) => {
 
 app.get('/api/users', async (req, res) => {
   var q = await User.find();
-  console.log(q)
   res.json(q)
 })
 
-app.post('/api/users', (req, res) => {
+app.post('/api/users', async (req, res) => {
   try {
-    var username = req.body.username;
-    var user = new User({
-      username: req.body.username
-    });
-    user.save();
+    var username = req.body.username || 'Anonymous';
 
-    res.json({"_id": user.id, "username": username});
+    var q = await User.findOne({username: username})
+
+    if(q) {
+
+      console.log('já existe fio');
+      console.log(q);
+      return res.json(q);
+
+    } else {
+
+      var user = new User({
+        username: username
+      });
+
+      await user.save();
+
+      return res.json({"_id": user.id, "username": username});
+    }
+
   } catch (err) {
     console.log(err);
-    res.json({"username": "A"});
-
+    res.json({error: err});
   }
-});
+}).clone;
 
 app.post('/api/users/:id/exercises', async (req, res) => {
   try {
     var id = req.params.id;
     var description = req.body["description"];
     var duration = req.body["duration"];
+    console.log(50)
 
     if (typeof id != "string") throw "Invalid ID";
     if (typeof description != "string") throw "Invalid Description";
+    console.log(40)
+    if (IsNumeric(duration)) throw "Invalid Duration";
+    console.log(30)
 
-    if (isNumeric(duration)) throw "Invalid Duration";
+    var user = await User.findById(id);
+    console.log(20)
 
-    var user = await User.findById(id, (err, docs) => {
-      if (err) {
-        throw "User Do Not Exists";
-      }
-      else {
-        res.json(docs)
-      }
-    })
+    if (user) {
+      res.json(docs);
+    } else {
+      console.log(10)
+      throw "User Do Not Exists";
+    }
     
-    res.json(user)
 
   } catch (err) {
     res.json({"error": err})
