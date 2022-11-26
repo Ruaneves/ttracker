@@ -3,7 +3,7 @@ const bp = require('body-parser');
 const cors = require('cors');
 
 const mongoose = require('mongoose');
-const { User } = require('./src/models');
+const { User, Exercise } = require('./src/models');
 
 const app = express();
 require('dotenv').config();
@@ -21,25 +21,20 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/users', async (req, res) => {
-  var q = await User.find();
+  let q = await User.find();
   res.json(q)
 })
 
 app.post('/api/users', async (req, res) => {
   try {
-    var username = req.body.username || 'Anonymous';
+    let username = req.body.username || 'Anonymous';
 
-    var q = await User.findOne({username: username})
+    let q = await User.findOne({username: username}, "username")
+    
+    if(q) {return res.json(q);} 
+    else {
 
-    if(q) {
-
-      console.log('já existe fio');
-      console.log(q);
-      return res.json(q);
-
-    } else {
-
-      var user = new User({
+      let user = new User({
         username: username
       });
 
@@ -49,38 +44,76 @@ app.post('/api/users', async (req, res) => {
     }
 
   } catch (err) {
-    console.log(err);
+    if(typeof err != 'string') return res.json({"error": "Internal Server Error"});
+    
     res.json({error: err});
   }
-}).clone;
+});
 
 app.post('/api/users/:id/exercises', async (req, res) => {
   try {
-    var id = req.params.id;
-    var description = req.body["description"];
-    var duration = req.body["duration"];
-    console.log(50)
+    let id = req.params.id;
+    let description = req.body["description"];
+    let duration = Number(req.body["duration"]);
+    let date = req.body["date"] ? new Date(req.body["date"]) : new Date();
 
     if (typeof id != "string") throw "Invalid ID";
-    if (typeof description != "string") throw "Invalid Description";
-    console.log(40)
-    if (IsNumeric(duration)) throw "Invalid Duration";
-    console.log(30)
+    if (typeof description != "string" || description === "") throw "Invalid Description";
+    if (!duration) throw "Invalid Duration";
+    if (!(date instanceof Date && !isNaN(date))) throw "Invalid Date Format";
 
-    var user = await User.findById(id);
-    console.log(20)
-
-    if (user) {
-      res.json(docs);
-    } else {
-      console.log(10)
-      throw "User Do Not Exists";
-    }
+    let q = await User.findOne({_id: id}, "username")
+    .catch(() => {
+      throw "User Do Not Exists"
+    })
     
+    let exercise = new Exercise({
+      "user_id": q.id,
+      "date": date.toDateString(),
+      "duration": duration,
+      "description": description
+    })
+
+    exercise.save();
+
+    return res.json({
+      "_id" : q.id,
+      "username": q.username,
+      "date": date.toDateString(),
+      "duration": duration,
+      "description": description
+    });
+
 
   } catch (err) {
-    res.json({"error": err})
+    if(typeof err != 'string') return res.json({"error": "Internal Server Error"});
+    return res.json({"error": err});
   }
+})
+
+app.get('/api/users/:id/logs', async (req, res) => {
+  try {
+    let id = req.params.id;
+    let from = req.params.from ? new Date(let from = req.params.from) : new Date();
+    
+    let to = req.params.to || new Date.toDateString();
+    let limit = req.params.limit || 10;
+    let q = await User.findOne({_id: id}).catch(() => {throw "User Do Not Exists"});
+    
+    let q2 = await Exercise.find({user_id: id},"-_id -__v -user_id");
+
+    return res.json({
+      "_id": id,
+      "username": q.username,
+      "count": q2.length,
+      "log": q2
+    });
+    
+  } catch (err) {
+    if(typeof err != 'string') return res.json({"error": "Internal Server Error"});
+    return res.json({error: err});
+  }
+
 })
 
 
