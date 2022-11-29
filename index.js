@@ -108,7 +108,13 @@ app.get('/api/users/:id/logs', async (req, res) => {
     console.log(from);
     console.log(to);
 
-    let q2 = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date").catch((err) => {
+    let q2 = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date")
+    .then((doc) => {
+      console.log("erro");
+
+    })
+    .catch((err) => {
+      console.log("erro");
       return [];
     });
 
@@ -120,6 +126,7 @@ app.get('/api/users/:id/logs', async (req, res) => {
     });
     
   } catch (err) {
+    console.log(err)
     if(typeof err != 'string') return res.json({"error": "Internal Server Error"});
     return res.json({error: err});
   }
