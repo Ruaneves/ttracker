@@ -61,6 +61,7 @@ app.post('/api/users/:id/exercises', async (req, res) => {
     if (typeof description != "string" || description === "") throw "Invalid Description";
     if (!duration) throw "Invalid Duration";
     if (!(date instanceof Date && !isNaN(date))) throw "Invalid Date Format";
+    date.setHours(0,0,0,0);
 
     let q = await User.findOne({_id: id}, "username")
     .catch(() => {
@@ -69,7 +70,7 @@ app.post('/api/users/:id/exercises', async (req, res) => {
     
     let exercise = new Exercise({
       "user_id": q.id,
-      "date": date.toDateString(),
+      "date": date,
       "duration": duration,
       "description": description
     })
@@ -94,13 +95,22 @@ app.post('/api/users/:id/exercises', async (req, res) => {
 app.get('/api/users/:id/logs', async (req, res) => {
   try {
     let id = req.params.id;
-    let from = req.params.from ? new Date(let from = req.params.from) : new Date();
+    let from = req.query.from ? new Date(req.query.from) : new Date(); 
+    let to = req.query.to ? new Date(req.query.to) : new Date(); 
+    let limit = req.query.limit || 10;
+
+    if (!(from instanceof Date && !isNaN(from)) || !(to instanceof Date && !isNaN(to))) throw "Invalid Date Format";
+    from.setHours(0,0,0,0);
+    to.setHours(0,0,0,0);
     
-    let to = req.params.to || new Date.toDateString();
-    let limit = req.params.limit || 10;
     let q = await User.findOne({_id: id}).catch(() => {throw "User Do Not Exists"});
     
-    let q2 = await Exercise.find({user_id: id},"-_id -__v -user_id");
+    console.log(from);
+    console.log(to);
+
+    let q2 = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date").catch((err) => {
+      return [];
+    });
 
     return res.json({
       "_id": id,

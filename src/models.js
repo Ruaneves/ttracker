@@ -3,13 +3,12 @@ const mongoose = require('mongoose');
 const User = mongoose.model('users', {
     username: String
 })
-const Exercise = mongoose.model('exercises', new mongoose.Schema({
+const Exercise = mongoose.model('exercises', {
     user_id: mongoose.ObjectId,
     description: String,
     duration: Number,
-    date: String,
-    
-}, { timestamps: true}))
+    date: Date
+})
 module.exports = {
     User: User,
     Exercise: Exercise
