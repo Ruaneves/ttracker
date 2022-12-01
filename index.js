@@ -94,6 +94,7 @@ app.post('/api/users/:id/exercises', async (req, res) => {
 
 app.get('/api/users/:id/logs', async (req, res) => {
   try {
+    if ((req.query.from && !req.query.to) || (req.query.to && !req.query.from)) throw "If you use the from or to query parameter, you have to use both of them";
     let id = req.params.id;
     let from = req.query.from ? new Date(req.query.from) : new Date(); 
     let to = req.query.to ? new Date(req.query.to) : new Date(); 
