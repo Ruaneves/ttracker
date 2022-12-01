@@ -108,15 +108,25 @@ app.get('/api/users/:id/logs', async (req, res) => {
     console.log(from);
     console.log(to);
 
-    let q2 = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date")
+    let q2 = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date").limit(limit)
     .then((doc) => {
-      console.log("erro");
-
+      console.log("then");
+      let filter = doc.map((x) => {
+        return {
+          description: x.description,
+          duration: x.duration,
+          date: new Date(x.date).toDateString()
+        };
+      })
+      return filter;
     })
     .catch((err) => {
       console.log("erro");
+      console.log(err)
       return [];
     });
+
+    console.log(q2)
 
     return res.json({
       "_id": id,
