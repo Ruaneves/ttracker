@@ -98,7 +98,7 @@ app.get('/api/users/:id/logs', async (req, res) => {
     let id = req.params.id;
     let from = req.query.from ? new Date(req.query.from) : new Date(); 
     let to = req.query.to ? new Date(req.query.to) : new Date(); 
-    let limit = req.query.limit || 10;
+    let limit = req.query.limit ? Number(req.query.limit) : 10;
 
     if (!(from instanceof Date && !isNaN(from)) || !(to instanceof Date && !isNaN(to))) throw "Invalid Date Format";
     from.setHours(0,0,0,0);
@@ -108,7 +108,8 @@ app.get('/api/users/:id/logs', async (req, res) => {
     
     console.log(from);
     console.log(to);
-
+    console.log(limit);
+    
     let q2 = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date").limit(limit)
     .then((doc) => {
       console.log("then");
