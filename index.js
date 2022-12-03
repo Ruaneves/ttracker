@@ -111,11 +111,7 @@ app.get('/api/users/:id/logs', async (req, res) => {
     
     let q = await User.findOne({_id: id}).catch(() => {throw "User Do Not Exists"});
     
-    console.log(from);
-    console.log(to);
-    console.log(limit);
-    
-    let q2 = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date").limit(limit)
+    let q2 = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date")
     .then((doc) => {
       console.log("then");
       let filter = doc.map((x) => {
@@ -133,7 +129,7 @@ app.get('/api/users/:id/logs', async (req, res) => {
       return [];
     });
 
-    console.log(q2)
+    q2 = q2.slice(0, limit);
 
     return res.json({
       "_id": id,
