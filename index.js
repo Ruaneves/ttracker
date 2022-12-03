@@ -117,7 +117,7 @@ app.get('/api/users/:id/logs', async (req, res) => {
       to.setHours(0,0,0,0);
       dateFilter.$lte = to.toISOString();
     }
-    let exerciseQuery = await Exercise.find({user_id: id, date: dateFilter},"-_id description duration date")
+    let exerciseQuery = await Exercise.find({user_id: id},"-_id description duration date")
     .then((doc) => {
       return doc.map((x) => {
         return {
