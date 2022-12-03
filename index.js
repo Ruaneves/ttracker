@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.static('public'));
 
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`, "BODY => ", req.body, "PARAMS =>", req.params);
+  console.log(`${req.method} ${req.url}`, "BODY => ", req.body, "QUERY =>", req.query);
   next()
 });
 
@@ -68,13 +68,13 @@ app.post('/api/users/:id/exercises', async (req, res) => {
     if (!(date instanceof Date && !isNaN(date))) throw "Invalid Date Format";
     date.setHours(0,0,0,0);
 
-    let q = await User.findOne({_id: id}, "username")
+    let userQuery = await User.findOne({_id: id}, "username")
     .catch(() => {
       throw "User Do Not Exists"
     })
     
     let exercise = new Exercise({
-      "user_id": q.id,
+      "user_id": userQuery.id,
       "date": date,
       "duration": duration,
       "description": description
@@ -83,8 +83,8 @@ app.post('/api/users/:id/exercises', async (req, res) => {
     exercise.save();
 
     return res.json({
-      "_id" : q.id,
-      "username": q.username,
+      "_id" : userQuery.id,
+      "username": userQuery.username,
       "date": date.toDateString(),
       "duration": duration,
       "description": description
@@ -109,37 +109,32 @@ app.get('/api/users/:id/logs', async (req, res) => {
     from.setHours(0,0,0,0);
     to.setHours(0,0,0,0);
     
-    let q = await User.findOne({_id: id}).catch(() => {throw "User Do Not Exists"});
+    let userQuery = await User.findOne({_id: id}).catch(() => {throw "User Do Not Exists"});
     
-    let q2 = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date")
+    let exerciseQuery = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date")
     .then((doc) => {
-      console.log("then");
-      let filter = doc.map((x) => {
+
+      return doc.map((x) => {
         return {
           description: x.description,
           duration: x.duration,
           date: new Date(x.date).toDateString()
         };
-      })
-      return filter;
-    })
-    .catch((err) => {
-      console.log("erro");
-      console.log(err)
-      return [];
-    });
+      });
 
-    q2 = q2.slice(0, limit);
+    })
+    .catch((err) => {return [];});
+
+    exerciseQuery = exerciseQuery.slice(0, limit);
 
     return res.json({
       "_id": id,
-      "username": q.username,
-      "count": q2.length,
-      "log": q2
+      "username": userQuery.username,
+      "count": exerciseQuery.length,
+      "log": exerciseQuery
     });
     
   } catch (err) {
-    console.log(err)
     if(typeof err != 'string') return res.json({"error": "Internal Server Error"});
     return res.json({error: err});
   }
