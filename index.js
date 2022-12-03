@@ -100,20 +100,23 @@ app.post('/api/users/:id/exercises', async (req, res) => {
 app.get('/api/users/:id/logs', async (req, res) => {
   try {
     let id = req.params.id;
-    let from = new Date(req.query.from);
-    let to = new Date(req.query.to);
+    let from = req.query.from ? new Date(req.query.from) : undefined;
+    let to = req.query.to ? new Date(req.query.to) : undefined;
     let limit = req.query.limit ? Number(req.query.limit) : 10;
 
-    if (!(from instanceof Date && !isNaN(from)) || !(to instanceof Date && !isNaN(to))) throw "Invalid Date Format";
-    from.setHours(0,0,0,0);
-    to.setHours(0,0,0,0);
+    if ((from && !(from instanceof Date && !isNaN(from))) || (to && !(to instanceof Date && !isNaN(to) ) )) throw "Invalid Date Format";
     
     let userQuery = await User.findOne({_id: id}).catch(() => {throw "User Do Not Exists"});
 
     let dateFilter = {};
-    if (from) dateFilter.$gte = from.toISOString();
-    if (to) dateFilter.$lte = to.toISOString();
-
+    if (from) {
+      from.setHours(0,0,0,0);
+      dateFilter.$gte = from.toISOString()
+    };
+    if (to) {
+      to.setHours(0,0,0,0);
+      dateFilter.$lte = to.toISOString();
+    }
     let exerciseQuery = await Exercise.find({user_id: id, date: dateFilter},"-_id description duration date")
     .then((doc) => {
       return doc.map((x) => {
