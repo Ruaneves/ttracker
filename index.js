@@ -16,6 +16,11 @@ app.use(bp.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static('public'));
 
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`, "BODY => ", req.body, "PARAMS =>", req.params);
+  next()
+});
+
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
 });
