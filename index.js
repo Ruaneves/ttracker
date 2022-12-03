@@ -99,10 +99,9 @@ app.post('/api/users/:id/exercises', async (req, res) => {
 
 app.get('/api/users/:id/logs', async (req, res) => {
   try {
-    if ((req.query.from && !req.query.to) || (req.query.to && !req.query.from)) throw "If you use the from or to query parameter, you have to use both of them";
     let id = req.params.id;
-    let from = req.query.from ? new Date(req.query.from) : new Date(); 
-    let to = req.query.to ? new Date(req.query.to) : new Date(); 
+    let from = req.query.from ? new Date(req.query.from) : undefined; 
+    let to = req.query.to ? new Date(req.query.to) : undefined; 
     let limit = req.query.limit ? Number(req.query.limit) : 10;
 
     if (!(from instanceof Date && !isNaN(from)) || !(to instanceof Date && !isNaN(to))) throw "Invalid Date Format";
@@ -110,10 +109,13 @@ app.get('/api/users/:id/logs', async (req, res) => {
     to.setHours(0,0,0,0);
     
     let userQuery = await User.findOne({_id: id}).catch(() => {throw "User Do Not Exists"});
-    
-    let exerciseQuery = await Exercise.find({user_id: id, date:{$gte: from.toISOString(), $lte: to.toISOString()}},"-_id description duration date")
-    .then((doc) => {
 
+    let dateFilter = {};
+    if (from) dateFilter.$gte = from;
+    if (to) dateFilter.$lte = to;
+
+    let exerciseQuery = await Exercise.find({user_id: id, date: dateFilter},"-_id description duration date")
+    .then((doc) => {
       return doc.map((x) => {
         return {
           description: x.description,
@@ -138,7 +140,6 @@ app.get('/api/users/:id/logs', async (req, res) => {
     if(typeof err != 'string') return res.json({"error": "Internal Server Error"});
     return res.json({error: err});
   }
-
 })
 
 
