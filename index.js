@@ -111,8 +111,8 @@ app.get('/api/users/:id/logs', async (req, res) => {
     let userQuery = await User.findOne({_id: id}).catch(() => {throw "User Do Not Exists"});
 
     let dateFilter = {};
-    if (from) dateFilter.$gte = from;
-    if (to) dateFilter.$lte = to;
+    if (from) dateFilter.$gte = from.toISOString();
+    if (to) dateFilter.$lte = to.toISOString();
 
     let exerciseQuery = await Exercise.find({user_id: id, date: dateFilter},"-_id description duration date")
     .then((doc) => {
